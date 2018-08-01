@@ -19,10 +19,10 @@
 use std::marker::PhantomData;
 
 pub(crate) mod tree_bitmap;
-pub(crate) use tree_bitmap::TreeBitmap;
+pub(crate) use self::tree_bitmap::TreeBitmap;
 
 pub(crate) mod address;
-pub(crate) use address::Address;
+pub(crate) use self::address::Address;
 
 /// A fast, compressed IP lookup table.
 pub struct IpLookupTable<A: Address, T> {
