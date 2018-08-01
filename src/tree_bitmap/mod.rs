@@ -22,11 +22,13 @@ pub struct TreeBitmap<T: Sized> {
 
 impl<T: Sized> TreeBitmap<T> {
     /// Returns ````TreeBitmap ```` with 0 start capacity.
+    #[inline(always)]
     pub fn new() -> Self {
         Self::with_capacity(0)
     }
 
     /// Returns ```TreeBitmap``` with pre-allocated buffers of size n.
+    #[inline(always)]
     pub fn with_capacity(n: usize) -> Self {
         let mut trieallocator: Allocator<Node> = Allocator::with_capacity(n);
         let mut root_hdl = trieallocator.alloc(0);
@@ -41,6 +43,7 @@ impl<T: Sized> TreeBitmap<T> {
     }
 
     /// Returns handle to root node.
+    #[inline(always)]
     fn root_handle(&self) -> AllocatorHandle {
         AllocatorHandle::generate(1, 0)
     }
@@ -54,6 +57,7 @@ impl<T: Sized> TreeBitmap<T> {
 
     /// Push down results encoded in the last 16 bits into child trie nodes.
     /// Makes ```node``` into a normal node.
+    #[inline(always)]
     fn push_down(&mut self, node: &mut Node) {
         debug_assert!(node.is_endnode(), "push_down: not an endnode");
         debug_assert!(node.child_ptr == 0);
@@ -98,6 +102,7 @@ impl<T: Sized> TreeBitmap<T> {
     }
 
     /// longest match lookup of ```nibbles```. Returns bits matched as u32, and reference to T.
+    #[inline(always)]
     pub fn longest_match(&self, nibbles: &[u8]) -> Option<(u32, &T)> {
         let mut cur_hdl = self.root_handle();
         let mut cur_index = 0;
@@ -144,6 +149,7 @@ impl<T: Sized> TreeBitmap<T> {
         }
     }
 
+    #[inline(always)]
     pub fn insert(&mut self, nibbles: &[u8], masklen: u32, value: T) -> Option<T> {
         let mut cur_hdl = self.root_handle();
         let mut cur_index = 0;
@@ -245,10 +251,12 @@ impl<T: Sized> TreeBitmap<T> {
         (node_bytes, result_bytes)
     }
 
+    #[inline(always)]
     pub fn len(&self) -> usize {
         self.len
     }
 
+    #[inline(always)]
     pub fn exact_match(&self, nibbles: &[u8], masklen: u32) -> Option<&T> {
         let mut cur_hdl = self.root_handle();
         let mut cur_index = 0;
@@ -281,6 +289,7 @@ impl<T: Sized> TreeBitmap<T> {
     }
 
     /// Remove prefix. Returns existing value if the prefix previously existed.
+    #[inline(always)]
     pub fn remove(&mut self, nibbles: &[u8], masklen: u32) -> Option<T> {
         debug_assert!(nibbles.len() >= (masklen / 4) as usize);
         let root_hdl = self.root_handle();
@@ -291,6 +300,7 @@ impl<T: Sized> TreeBitmap<T> {
     }
 
     // remove child and result from node
+    #[inline(always)]
     fn remove_child(&mut self, node: &mut Node, nibbles: &[u8], masklen: u32) -> Option<T> {
         let nibble = nibbles[0];
         let bitmap = node::gen_bitmap(nibble, cmp::min(masklen, 4)) & node::END_BIT_MASK;
@@ -390,6 +400,8 @@ static PREFIX_OF_BIT: [u8; 32] = [// 0       1       2      3        4       5  
                                   // 24      25      26      27      28      29      30      31
                                   0b1000, 0b1001, 0b1010, 0b1011, 0b1100, 0b1101, 0b1110, 0b1111];
 
+
+#[inline(always)]
 fn next<T: Sized>(
     trie: &TreeBitmap<T>,
     path: &mut Vec<PathElem>,

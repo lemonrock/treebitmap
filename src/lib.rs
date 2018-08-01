@@ -18,14 +18,14 @@
 
 use std::marker::PhantomData;
 
-mod tree_bitmap;
-use tree_bitmap::TreeBitmap;
+pub(crate) mod tree_bitmap;
+pub(crate) use tree_bitmap::TreeBitmap;
 
-mod address;
-use address::Address;
+pub(crate) mod address;
+pub(crate) use address::Address;
 
 /// A fast, compressed IP lookup table.
-pub struct IpLookupTable<A, T> {
+pub struct IpLookupTable<A: Address, T> {
     inner: TreeBitmap<T>,
     _addrtype: PhantomData<A>,
 }
@@ -35,6 +35,7 @@ where
     A: Address,
 {
     /// Initialize an empty lookup table with no preallocation.
+    #[inline(always)]
     pub fn new() -> Self {
         IpLookupTable {
             inner: TreeBitmap::new(),
@@ -43,6 +44,7 @@ where
     }
 
     /// Initialize an empty lookup table with pre-allocated buffers.
+    #[inline(always)]
     pub fn with_capacity(n: usize) -> Self {
         IpLookupTable {
             inner: TreeBitmap::with_capacity(n),
@@ -51,16 +53,19 @@ where
     }
 
     /// Return the bytes used by nodes and results.
+    #[inline(always)]
     pub fn mem_usage(&self) -> (usize, usize) {
         self.inner.mem_usage()
     }
 
     /// Return number of items inside table.
+    #[inline(always)]
     pub fn len(&self) -> usize {
         self.inner.len()
     }
 
     /// Return `true` if no item is inside table.
+    #[inline(always)]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
@@ -82,6 +87,7 @@ where
     /// // Insert duplicate
     /// assert_eq!(table.insert(prefix, masklen, "bar"), Some("foo"));
     /// ```
+    #[inline(always)]
     pub fn insert(&mut self, ip: A, masklen: u32, value: T) -> Option<T> {
         self.inner.insert(&ip.nibbles().as_ref(), masklen, value)
     }
@@ -104,6 +110,7 @@ where
     /// // Remove non-existant
     /// assert_eq!(table.remove(prefix, masklen), None);
     /// ```
+    #[inline(always)]
     pub fn remove(&mut self, ip: A, masklen: u32) -> Option<T> {
         self.inner.remove(&ip.nibbles().as_ref(), masklen)
     }
@@ -126,6 +133,7 @@ where
     /// // differing mask
     /// assert_eq!(table.exact_match(prefix, 48), None);
     /// ```
+    #[inline(always)]
     pub fn exact_match(&self, ip: A, masklen: u32) -> Option<&T> {
         self.inner.exact_match(&ip.nibbles().as_ref(), masklen)
     }
@@ -155,7 +163,8 @@ where
     /// let result = table.longest_match(lookupip);
     /// assert_eq!(result, Some((less_specific, 32, &"foo")));
     /// ```
-    pub fn longest_match(&self, ip: A) -> Option<(A, u32, &T)> {
+    #[inline(always)]
+	pub fn longest_match(&self, ip: A) -> Option<(A, u32, &T)> {
         match self.inner.longest_match(&ip.nibbles().as_ref()) {
             Some((bits_matched, value)) => Some((ip.mask(bits_matched), bits_matched, value)),
             None => None,
@@ -226,6 +235,7 @@ impl<A, T> Default for IpLookupTable<A, T>
 where
     A: Address,
 {
+    #[inline(always)]
     fn default() -> Self {
         Self::new()
     }
