@@ -22,10 +22,10 @@ mod tree_bitmap;
 use tree_bitmap::TreeBitmap;
 
 mod address;
-use address::Address;
+pub use address::Address;
 
 /// A fast, compressed IP lookup table.
-pub struct IpLookupTable<A, T> {
+pub struct IpLookupTable<A: Address, T> {
     inner: TreeBitmap<T>,
     _addrtype: PhantomData<A>,
 }
