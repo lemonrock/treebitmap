@@ -148,8 +148,49 @@ impl<T: Sized> TreeBitmap<T> {
             None => None,
         }
     }
+
+    /// longest match lookup of ```nibbles```. Returns reference to T.
+    #[inline(always)]
+    pub fn longest_match_value(&self, nibbles: &[u8]) -> Option<&T> {
+        let mut cur_hdl = self.root_handle();
+        let mut cur_index = 0;
+        let mut best_match: Option<(AllocatorHandle, u32)> = None; // result handle + index
+
+        for nibble in nibbles {
+            let cur_node = *self.trienodes.get(&cur_hdl, cur_index);
+            let match_mask = unsafe { *node::MATCH_MASKS.get_unchecked(*nibble as usize) };
+
+            if let MatchResult::Match(result_hdl, result_index, _matching_bit_index) =
+                cur_node.match_internal(match_mask)
+            {
+                best_match = Some((result_hdl, result_index));
+            }
+
+            if cur_node.is_endnode() {
+                break;
+            }
+            match cur_node.match_external(match_mask) {
+                MatchResult::Chase(child_hdl, child_index) => {
+                    cur_hdl = child_hdl;
+                    cur_index = child_index;
+                    continue;
+                }
+                MatchResult::None => {
+                    break;
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        match best_match {
+            Some((result_hdl, result_index)) => {
+                Some(self.results.get(&result_hdl, result_index))
+            }
+            None => None,
+        }
+    }
     
-    /// longest match lookup of ```nibbles```. Returns bits matched as u32, and reference to T.
+    /// longest match lookup of ```nibbles```. Returns presence.
     #[inline(always)]
     pub fn longest_match_present(&self, nibbles: &[u8]) -> bool {
         let mut cur_hdl = self.root_handle();
